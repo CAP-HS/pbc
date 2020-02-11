@@ -1,66 +1,40 @@
-// requires
-// * stdio.h
-// * gmp.h
+// Type D pairings, aka MNT curves.
+
+// Requires:
 // * mnt.h
-// * fops.h
-// * pairing.h
+// * param.h
 #ifndef __PBC_D_PARAM_H__
 #define __PBC_D_PARAM_H__
 
-struct d_param_s {
-    mpz_t q; //curve defined over F_q
-    mpz_t n; //has order n (= q - t + 1) in F_q
-    mpz_t h; //h * r = n, r is prime
-    mpz_t r;
-    mpz_t a, b; //curve equation is y^2 = x^3 + ax + b
-    int k; //embedding degree
-    mpz_t nk; //order of curve over F_q^k
-    mpz_t hk; //hk * r^2 = nk
-    mpz_t *coeff; //coefficients of polynomial used to extend F_q by k/2
-    mpz_t nqr; //a quadratic nonresidue in F_q^d that lies in F_q
-};
-
-typedef struct d_param_s d_param_t[1];
-typedef struct d_param_s *d_param_ptr;
+struct symtab_s;
+int pbc_param_init_d(pbc_param_ptr par, struct symtab_s *tab);
 
 /*@manual dparam
-Initialize ''p''. This must be called before ''p'' can be used.
+Type D curves are generated using the complex multiplication (CM) method.  This
+function sets 'p' to a type D pairing parameters from CM parameters 'cm'.
+Other library calls search for appropriate CM parameters and the results
+can be passed to this function.
+
+To be secure, generic discrete log algorithms must be infeasible in groups of
+order r, and finite field discrete log algorithms must be infeasible in finite
+fields of order q^6^.  For usual CM parameters, r is a few bits smaller than q.
+
+Using type D pairings allows elements of group G1 to be quite short, typically
+170-bits. Because of a certain trick, elements of group G2 need only be 3 times
+longer, that is, about 510 bits rather than 6 times long. They are not quite
+as short as type F pairings, but much faster.
+
+I sometimes refer to a type D curve as a triplet of numbers: the discriminant,
+the number of bits in the prime q, and the number of bits in the prime r. The
+`gen/listmnt` program prints these numbers.
+
+Among the bundled type D curve parameters are the curves 9563-201-181,
+62003-159-158 and 496659-224-224 which have shortened names `param/d201.param`,
+`param/d159.param` and `param/d225.param` respectively.
+
+See `gen/listmnt.c` and `gen/gendparam.c` for how to generate type D pairing
+parameters.
 */
-void d_param_init(d_param_ptr p);
+void pbc_param_init_d_gen(pbc_param_ptr p, pbc_cm_ptr cm);
 
-/*@manual dparam
-Clear ''p''. This should be called after ''p'' is no longer needed.
-*/
-void d_param_clear(d_param_ptr p);
-
-/*@manual dparam
-Write the parameters in ''p'' in a text format onto ''stream''.
-*/
-void d_param_out_str(FILE *stream, d_param_ptr p);
-
-void d_param_inp_generic (d_param_ptr p, fetch_ops_t fops, void *ctx);
-void pairing_init_d_param(pairing_t pairing, d_param_t param);
-
-static inline void d_param_init_inp_str(d_param_ptr p, FILE *stream)
-{
-    d_param_init(p);
-    d_param_init_inp_str(p, stream);
-}
-
-/*@manual dparam
-Type D curves are generated using the
-complex multiplication (CM) method.
-This function sets ''p'' to
-a type D pairing parameters from CM parameters ''cm''.
-Another part of the library searches for
-appropriate CM parameters (see below)
-and the results can be passed to this function.
-</para>
-<para>
-To be secure, generic discrete log algorithms must
-be infeasible in groups of order r, and finite field discrete log algorithms
-must be infeasible in finite fields of order q^6.
-For usual CM parameters, r is a few bits smaller than q.
-*/
-void d_param_from_cm(d_param_t p, cm_info_ptr cm);
 #endif //__PBC_D_PARAM_H__
